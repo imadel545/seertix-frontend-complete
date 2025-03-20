@@ -3,70 +3,125 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #2563eb; /* Bleu Tailwind CSS (blue-600) */
-  --error: #ef4444; /* Rouge Tailwind CSS (red-500) */
-  --success: #22c55e; /* Vert Tailwind CSS (green-500) */
-  --gray-light: #f9fafb; /* Gris clair (gray-50) */
+  --primary: #2563eb;
+  --error: #ef4444;
+  --success: #22c55e;
+  --gray-light: #f9fafb;
+  --border-color: #d1d5db;
+  --input-bg: #ffffff;
+  --input-text: #171717;
+  --input-placeholder: #9ca3af;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-    --gray-light: #1f2937; /* dark mode (gray-800) */
+    --gray-light: #1f2937;
+    --border-color: #374151;
+    --input-bg: #111827;
+    --input-text: #f9fafb;
+    --input-placeholder: #6b7280;
   }
 }
 
+html,
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", sans-serif;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-/* Personnalisation des formulaires (amélioration de la lisibilité) */
-textarea,
-input {
-  @apply border-2 rounded-lg p-3 text-lg transition duration-200;
-  background-color: transparent;
-  border-color: #d1d5db; /* gray-300 */
-  color: var(--foreground);
+/* Personnalisation avancée des inputs et textarea pour meilleure lisibilité */
+input,
+textarea {
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem; /* Tailwind : rounded-lg */
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-textarea:focus,
-input:focus {
-  outline: none;
+input::placeholder,
+textarea::placeholder {
+  color: var(--input-placeholder);
+  opacity: 1;
+}
+
+input:focus,
+textarea:focus {
   border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3); /* primary color with slight transparency */
+  outline: none;
 }
 
-/* Gestion des erreurs pour les champs */
-textarea.error,
-input.error {
+/* Gestion claire des erreurs sur les champs */
+input.error,
+textarea.error {
   border-color: var(--error);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
 
-/* Centrage global et responsive des cartes principales */
-.container {
-  @apply mx-auto px-4 sm:px-6 lg:px-8;
-}
-
-/* Styles spécifiques aux boutons pour meilleure visibilité */
+/* Boutons modernes avec animations subtiles */
 button {
-  @apply transition duration-200;
+  @apply transition-all duration-300 ease-in-out;
+}
+
+button:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-/* Styles personnalisés pour la carte conseil */
+/* Carte conseil avec effets modernes et centré parfaitement */
 .advice-card {
-  @apply bg-white shadow-xl rounded-2xl p-8 mx-auto max-w-2xl;
+  @apply bg-white shadow-xl rounded-2xl p-6 mx-auto max-w-2xl;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Adaptation automatique au mode sombre */
+.advice-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
 @media (prefers-color-scheme: dark) {
   .advice-card {
-    @apply bg-gray-800 shadow-md;
+    @apply bg-gray-800 shadow-lg;
   }
+}
+
+/* Conteneur centralisé responsif pour une meilleure UX/UI */
+.container {
+  @apply mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Animations subtiles pour affichage fluide */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Scroll doux et rendu optimisé */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
 }

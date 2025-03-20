@@ -8,19 +8,28 @@ export default function AdvicePage() {
   const [content, setContent] = useState("");
   const [randomAdvice, setRandomAdvice] = useState(null);
   const [loading, setLoading] = useState({ submit: false, random: false });
+  const [canReceiveAdvice, setCanReceiveAdvice] = useState(false);
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
+  // Vérifier si l'utilisateur est connecté au montage du composant
   useEffect(() => {
-    if (!token) router.push("/login");
+    if (!token) {
+      router.push("/login");
+    } else {
+      setCanReceiveAdvice(localStorage.getItem("hasSubmittedAdvice") === "true");
+    }
   }, [router, token]);
 
+  // Vérification du texte soumis
   const validateContent = (text) => {
     const trimmed = text.trim();
     return trimmed.length >= 3 && trimmed.length <= 300;
   };
 
+  /**
+   * Soumission d’un conseil
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateContent(content)) {
@@ -46,14 +55,11 @@ export default function AdvicePage() {
 
       toast.success(data.message || "Conseil soumis avec succès !");
       setContent("");
-      localStorage.setItem("hasSubmittedAdvice", "true");
 
-      if (data.randomAdvice) {
-        setRandomAdvice(data.randomAdvice);
-      } else {
-        setRandomAdvice(null);
-        toast("Aucun conseil disponible actuellement.");
-      }
+      // Activer la possibilité de recevoir un conseil
+      localStorage.setItem("hasSubmittedAdvice", "true");
+      setCanReceiveAdvice(true);
+      setRandomAdvice(null); // Réinitialiser le conseil précédent
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -61,29 +67,35 @@ export default function AdvicePage() {
     }
   };
 
+  /**
+   * Récupération d’un conseil aléatoire
+   */
   const handleGetRandom = async () => {
+    if (!canReceiveAdvice) return;
+
     setLoading((prev) => ({ ...prev, random: true }));
 
     try {
       const res = await fetch("http://localhost:5050/advice/random", {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Erreur serveur inconnue.");
 
       setRandomAdvice(data);
       toast.success("Conseil reçu avec succès !");
+      
+      // Désactiver la possibilité de recevoir un autre conseil sans nouvelle soumission
       localStorage.setItem("hasSubmittedAdvice", "false");
+      setCanReceiveAdvice(false);
     } catch (err) {
       toast.error(err.message);
     } finally {
       setLoading((prev) => ({ ...prev, random: false }));
     }
   };
-
-  const hasSubmittedThisSession = () =>
-    localStorage.getItem("hasSubmittedAdvice") === "true";
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 flex items-center justify-center py-12">
@@ -104,6 +116,7 @@ export default function AdvicePage() {
           </button>
         </div>
 
+        {/* Zone de saisie du conseil */}
         <form onSubmit={handleSubmit}>
           <textarea
             value={content}
@@ -127,11 +140,12 @@ export default function AdvicePage() {
 
         <hr className="my-6 border-gray-200" />
 
+        {/* Bouton pour recevoir un conseil aléatoire */}
         <button
           onClick={handleGetRandom}
-          disabled={!hasSubmittedThisSession() || loading.random}
+          disabled={!canReceiveAdvice || loading.random}
           className={`w-full py-3 rounded-xl font-bold text-white ${
-            !hasSubmittedThisSession() || loading.random
+            !canReceiveAdvice || loading.random
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-green-600 hover:bg-green-700"
           } transition`}
@@ -139,12 +153,13 @@ export default function AdvicePage() {
           {loading.random ? "Chargement..." : "Recevoir un conseil aléatoire"}
         </button>
 
-        {!hasSubmittedThisSession() && (
+        {!canReceiveAdvice && (
           <p className="text-sm text-gray-500 text-center mt-2">
             (Soumets d'abord un conseil pour débloquer)
           </p>
         )}
 
+        {/* Affichage du conseil reçu */}
         {randomAdvice && (
           <div className="mt-6 bg-indigo-50 border border-indigo-200 p-6 rounded-xl shadow-sm animate-fade-in">
             <h2 className="text-xl font-bold text-indigo-700 mb-3">
