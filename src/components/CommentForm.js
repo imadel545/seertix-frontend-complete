@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { getSocket } from "@/lib/socket";
+import { motion } from "framer-motion";
 
 export default function CommentForm({
   adviceId,
@@ -15,19 +16,15 @@ export default function CommentForm({
 }) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const textareaRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!content.trim()) {
-      toast.error("Le contenu ne peut pas être vide.");
-      return;
-    }
+    if (!content.trim()) return toast.error("✍️ Le commentaire est vide !");
 
     setSubmitting(true);
-
     try {
-      const res = await fetch("http://localhost:5050/comment", {
+      const response = await fetch("http://localhost:5050/comment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -40,65 +37,78 @@ export default function CommentForm({
         }),
       });
 
-      const data = await res.json();
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Erreur inconnue.");
 
-      if (!res.ok) throw new Error(data.error || "Erreur lors de l'envoi.");
-
-      toast.success("💬 Commentaire publié !");
+      toast.success("✅ Commentaire publié !");
       setContent("");
 
-      // 🔥 Émettre l’événement via Socket.io
       const socket = getSocket();
-      if (socket && socket.connected) {
-        socket.emit("comment:new", {
-          adviceId,
-          comment: data,
-        });
+      if (socket?.connected) {
+        socket.emit("comment:new", { adviceId, comment: data });
       }
 
-      if (onCommentAdded) onCommentAdded(data);
-      if (onCancelReply) onCancelReply();
+      onCommentAdded?.(data);
+      onCancelReply?.();
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || "Erreur lors de l’envoi.");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="my-4 space-y-2">
+    <motion.form
+      onSubmit={handleSubmit}
+      className="my-4 space-y-2 animate-fade-in"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <label htmlFor="comment-text" className="sr-only">
+        Écrire un commentaire
+      </label>
       <textarea
-        className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 transition"
+        id="comment-text"
+        ref={textareaRef}
+        className="w-full p-3 border dark:border-gray-700 border-gray-300 rounded-xl bg-white dark:bg-gray-900 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition"
         rows={3}
         placeholder={
-          parentId ? "Votre réponse..." : "Ajouter un commentaire..."
+          parentId ? "✏️ Votre réponse..." : "💬 Ajouter un commentaire..."
         }
         value={content}
         onChange={(e) => setContent(e.target.value)}
         disabled={submitting}
+        aria-disabled={submitting}
+        autoFocus={!!parentId}
       />
+
       <div className="flex items-center justify-between">
         <button
           type="submit"
           disabled={submitting}
-          className={`px-6 py-2 rounded-lg font-semibold transition text-white ${
+          className={`px-6 py-2 rounded-lg font-semibold transition text-white shadow ${
             submitting
               ? "bg-gray-400 cursor-wait"
               : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
-          {submitting ? "Envoi..." : parentId ? "Répondre" : "Commenter"}
+          {submitting
+            ? "⏳ Envoi en cours..."
+            : parentId
+            ? "↪️ Répondre"
+            : "💬 Commenter"}
         </button>
+
         {replyTo && onCancelReply && (
           <button
             type="button"
             onClick={onCancelReply}
-            className="text-sm text-gray-600 hover:underline ml-4"
+            className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition ml-4"
           >
-            Annuler la réponse
+            ❌ Annuler la réponse
           </button>
         )}
       </div>
-    </form>
+    </motion.form>
   );
 }

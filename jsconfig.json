@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
+    "baseUrl": ".", // ✅ baseUrl requis pour que les paths soient pris en compte
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"]
     }
   }
 }

@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, HeartOff, MessageCircle, Trash2, Pencil } from "lucide-react";
+import {
+  Heart,
+  HeartOff,
+  MessageCircle,
+  Trash2,
+  Pencil,
+  Loader2,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import { getSocket } from "@/lib/socket";
@@ -14,6 +21,9 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(comment.content);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const isOwner = userId === comment.user_id;
 
   useEffect(() => {
@@ -22,8 +32,8 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
   }, [comment]);
 
   const toggleLike = async () => {
+    const endpoint = isLiked ? "unlike" : "like";
     try {
-      const endpoint = isLiked ? "unlike" : "like";
       const res = await fetch(
         `http://localhost:5050/comment/${comment.id}/${endpoint}`,
         {
@@ -33,15 +43,16 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
       setIsLiked(!isLiked);
       setLikeCount((prev) => prev + (isLiked ? -1 : 1));
     } catch (err) {
-      toast.error("Erreur lors du like: " + err.message);
+      toast.error("Erreur lors du like : " + err.message);
     }
   };
 
   const handleUpdate = async () => {
+    if (!editedContent.trim()) return toast.error("Contenu vide.");
+    setUpdating(true);
     try {
       const res = await fetch(`http://localhost:5050/comment/${comment.id}`, {
         method: "PUT",
@@ -53,16 +64,18 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
       toast.success("Commentaire modifié ✅");
       setIsEditing(false);
       getSocket()?.emit("comment:update", data);
     } catch (err) {
-      toast.error("Erreur modification: " + err.message);
+      toast.error("Erreur modification : " + err.message);
+    } finally {
+      setUpdating(false);
     }
   };
 
   const handleDelete = async () => {
+    setDeleting(true);
     try {
       const res = await fetch(`http://localhost:5050/comment/${comment.id}`, {
         method: "DELETE",
@@ -73,8 +86,9 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
       toast.success("Commentaire supprimé 🗑️");
       getSocket()?.emit("comment:delete", { commentId: comment.id });
     } catch (err) {
-      toast.error("Erreur suppression: " + err.message);
+      toast.error("Erreur suppression : " + err.message);
     } finally {
+      setDeleting(false);
       setShowConfirm(false);
     }
   };
@@ -84,7 +98,7 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-4 mb-4 border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-4 mb-4 border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-lg">
       <div className="flex justify-between items-start">
         <div className="w-full">
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -98,17 +112,21 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
           </p>
 
           {isEditing ? (
-            <div className="mt-2">
+            <div className="mt-2 space-y-2">
               <textarea
-                className="w-full border border-gray-300 rounded-md p-2 text-sm dark:bg-gray-700 dark:text-white"
+                className="w-full border border-gray-300 rounded-md p-2 text-sm dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2">
                 <button
                   onClick={handleUpdate}
-                  className="px-3 py-1 text-white bg-green-600 rounded-md hover:bg-green-700 text-sm"
+                  disabled={updating}
+                  className="flex items-center px-3 py-1 text-white bg-green-600 rounded-md hover:bg-green-700 text-sm"
                 >
+                  {updating && (
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  )}
                   Enregistrer
                 </button>
                 <button
@@ -139,11 +157,12 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
       </div>
 
       {!isEditing && (
-        <div className="flex space-x-6 mt-4 items-center">
+        <div className="flex space-x-6 mt-4 items-center text-sm">
           <button
             onClick={toggleLike}
-            title={isLiked ? "Annuler le like" : "Liker ce commentaire"}
-            className="flex items-center text-sm text-gray-600 hover:text-red-500 dark:text-gray-400"
+            className={`flex items-center ${
+              isLiked ? "text-red-500" : "text-gray-600 dark:text-gray-400"
+            } hover:scale-105 transition`}
           >
             {isLiked ? (
               <Heart className="w-4 h-4 fill-red-500 mr-1" />
@@ -155,7 +174,7 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
 
           <button
             onClick={() => onReplyClick(comment.id)}
-            className="flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+            className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 transition"
           >
             <MessageCircle className="w-4 h-4 mr-1" /> Répondre
           </button>
@@ -167,6 +186,7 @@ export default function CommentCard({ comment, userId, token, onReplyClick }) {
           message="Voulez-vous vraiment supprimer ce commentaire ?"
           onConfirm={handleDelete}
           onCancel={() => setShowConfirm(false)}
+          loading={deleting}
         />
       )}
     </div>

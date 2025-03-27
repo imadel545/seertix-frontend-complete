@@ -1,9 +1,8 @@
-// src/app/layout.js
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import AuthProvider from "../context/AuthContext";
+import AuthProvider from "../context/AuthContext"; // ✅ correction ici
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 

@@ -4,29 +4,31 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
+
   const [loading, setLoading] = useState(false);
+
+  const validateInputs = () => {
+    const { name, email, password } = formData;
+    if (name.trim().length < 2) return "Le nom est trop court.";
+    if (!email.includes("@")) return "Email invalide.";
+    if (password.length < 6) return "Mot de passe trop court.";
+    return null;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const validateInputs = () => {
-    const { name, email, password } = formData;
-    if (name.trim().length < 2)
-      return "Le nom doit contenir au moins 2 caractères.";
-    if (!email.includes("@")) return "Adresse email invalide.";
-    if (password.length < 6)
-      return "Le mot de passe doit contenir au moins 6 caractères.";
-    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -43,48 +45,32 @@ export default function RegisterPage() {
       });
 
       const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.error || "Erreur lors de l’inscription.");
+      if (!res.ok) throw new Error(data.error || "Erreur d’inscription.");
 
-      // Connexion auto
-      const loginRes = await fetch("http://localhost:5050/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      // Connexion automatique
+      await login(formData.email, formData.password);
 
-      const loginData = await loginRes.json();
-      if (!loginRes.ok)
-        throw new Error("Inscription réussie mais connexion échouée.");
-
-      localStorage.setItem("token", loginData.token);
-      toast.success("Bienvenue sur Seertix 🚀");
-
+      toast.success("Compte créé et connecté !");
       setTimeout(() => router.push("/profile"), 1000);
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || "Erreur de création du compte.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 to-blue-100 dark:from-zinc-900 dark:to-zinc-800 flex items-center justify-center px-4">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-100 to-blue-100 px-4">
       <Toaster />
-      <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8 fade-in">
-        <h1 className="text-3xl font-extrabold text-gray-800 dark:text-white text-center mb-6">
-          ✨ Créer un compte
-        </h1>
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-8">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-extrabold text-gray-800">✨ Crée ton compte</h1>
+          <p className="text-gray-500 mt-1">Et entre dans la légende Seertix.</p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        <form className="space-y-5" onSubmit={handleSubmit} noValidate>
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
               Nom complet
             </label>
             <input
@@ -92,18 +78,15 @@ export default function RegisterPage() {
               name="name"
               type="text"
               required
+              placeholder="Ton nom"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border dark:border-zinc-600 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 outline-none transition"
-              placeholder="Jean Dupont"
+              className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Adresse Email
             </label>
             <input
@@ -111,18 +94,15 @@ export default function RegisterPage() {
               name="email"
               type="email"
               required
+              placeholder="email@example.com"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border dark:border-zinc-600 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 outline-none transition"
-              placeholder="exemple@email.com"
+              className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Mot de passe
             </label>
             <input
@@ -130,19 +110,19 @@ export default function RegisterPage() {
               name="password"
               type="password"
               required
+              placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border dark:border-zinc-600 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 outline-none transition"
-              placeholder="••••••••"
+              className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-lg text-white font-semibold transition ${
+            className={`w-full py-3 font-semibold rounded-lg text-white transition duration-300 ${
               loading
-                ? "bg-gray-400 cursor-not-allowed"
+                ? "bg-gray-400 cursor-wait"
                 : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
@@ -150,11 +130,11 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="text-sm text-center mt-6 text-gray-600 dark:text-gray-400">
+        <p className="mt-6 text-center text-sm text-gray-600">
           Déjà membre ?{" "}
           <Link
             href="/login"
-            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            className="text-blue-600 hover:text-blue-800 font-semibold"
           >
             Se connecter
           </Link>

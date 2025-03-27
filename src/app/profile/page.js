@@ -7,20 +7,26 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { API_ROUTES, authHeaders } from "@/constants/api";
 import { motion } from "framer-motion";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfileContentWrapper />
+    </ProtectedRoute>
+  );
+}
+
+function ProfileContentWrapper() {
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   useEffect(() => {
-    if (!token) {
-      router.push("/login");
-    } else {
-      fetchProfile();
-    }
+    fetchProfile();
   }, []);
 
   const fetchProfile = async () => {
@@ -32,7 +38,7 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error(data.error || "Erreur serveur.");
       setProfile(data);
     } catch (err) {
-      toast.error(err.message || "Échec chargement profil.");
+      toast.error(err.message || "Erreur récupération profil.");
     } finally {
       setLoading(false);
     }
