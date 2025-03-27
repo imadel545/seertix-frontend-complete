@@ -1,7 +1,9 @@
+// src/app/layout.js
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import AuthProvider from "../context/AuthContext";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -37,15 +39,17 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr" className="scroll-smooth antialiased">
+    <html lang="fr" className="scroll-smooth antialiased dark">
       <body
-        className={`${inter.className} flex flex-col min-h-screen bg-gradient-to-tr from-white to-indigo-50 text-gray-900`}
+        className={`${inter.className} flex flex-col min-h-screen bg-gradient-to-tr from-white to-indigo-50 dark:from-zinc-900 dark:to-zinc-800 text-gray-900 dark:text-gray-100 transition-colors duration-300`}
       >
-        <Header />
-        <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          {children}
-        </main>
-        <Footer />
+        <AuthProvider>
+          <Header />
+          <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            {children}
+          </main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

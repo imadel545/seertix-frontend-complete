@@ -11,6 +11,7 @@
   --input-bg: #ffffff;
   --input-text: #171717;
   --input-placeholder: #9ca3af;
+  --transition-speed: 0.3s;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,19 +31,21 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: "Inter", sans-serif;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color var(--transition-speed),
+    color var(--transition-speed);
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Personnalisation avancée des inputs et textarea pour meilleure lisibilité */
 input,
 textarea {
   background-color: var(--input-bg);
   color: var(--input-text);
   border: 2px solid var(--border-color);
-  border-radius: 0.5rem; /* Tailwind : rounded-lg */
+  border-radius: 0.5rem;
   padding: 0.75rem 1rem;
   font-size: 1rem;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: all var(--transition-speed) ease;
 }
 
 input::placeholder,
@@ -54,18 +57,16 @@ textarea::placeholder {
 input:focus,
 textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3); /* primary color with slight transparency */
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
   outline: none;
 }
 
-/* Gestion claire des erreurs sur les champs */
 input.error,
 textarea.error {
   border-color: var(--error);
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
 
-/* Boutons modernes avec animations subtiles */
 button {
   @apply transition-all duration-300 ease-in-out;
 }
@@ -82,10 +83,11 @@ button:disabled {
   box-shadow: none;
 }
 
-/* Carte conseil avec effets modernes et centré parfaitement */
+/* 💡 Card design */
 .advice-card {
   @apply bg-white shadow-xl rounded-2xl p-6 mx-auto max-w-2xl;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform var(--transition-speed),
+    box-shadow var(--transition-speed);
 }
 
 .advice-card:hover {
@@ -99,12 +101,12 @@ button:disabled {
   }
 }
 
-/* Conteneur centralisé responsif pour une meilleure UX/UI */
+/* 🌐 Global container */
 .container {
   @apply mx-auto px-4 sm:px-6 lg:px-8;
 }
 
-/* Animations subtiles pour affichage fluide */
+/* ✨ Animations avancées */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -116,12 +118,72 @@ button:disabled {
   }
 }
 
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseFade {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -450px 0;
+  }
+  100% {
+    background-position: 450px 0;
+  }
+}
+
+/* 🔥 Classes utilitaires */
 .fade-in {
   animation: fadeIn 0.4s ease-out;
 }
 
-/* Scroll doux et rendu optimisé */
-html {
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
+.slide-in {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.pop-in {
+  animation: pop 0.3s ease-out;
+}
+
+.pulse-fade {
+  animation: pulseFade 1.5s infinite ease-in-out;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 50%, #e0e0e0 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  .skeleton {
+    background: linear-gradient(90deg, #2c2c2c 25%, #3a3a3a 50%, #2c2c2c 75%);
+  }
 }
